@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  company   String
+  email     String
+  website   String?
+  message   String
+  // status: "new" | "analyzing" | "analyzed"
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+
+  analysis      LeadAnalysis?
+  notifications Notification[]
+
+  @@map("leads")
+}
+
+model LeadAnalysis {
+  id          String   @id @default(cuid())
+  leadId      String   @unique
+  score       Int
+  // priority: "hot" | "warm" | "cold"
+  priority    String
+  // intent: "high" | "medium" | "low"
+  intent      String
+  companyType String
+  teamSize    String
+  // SQLite does not support String[] — stored as JSON string, deserialized in service layer
+  needs       String
+  summary     String
+  createdAt   DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("lead_analyses")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  leadId    String
+  // type: "hot_lead"
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
